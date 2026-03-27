@@ -1,13 +1,51 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum Genotype {
+  AA
+  AS  
+  SS  
+  AC
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum Specialization {
+  GENERAL_PRACTICE
+  PEDIATRICS
+  CARDIOLOGY
+  DERMATOLOGY
+  NEUROLOGY
+  PSYCHIATRY
+  DENTIST
+  OPHTHALMOLOGY
+  EMERGENCY_MEDICINE
 }
