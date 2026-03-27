@@ -73,3 +73,17 @@ model Role {
 
   @@map("roles") //says the table name in the database should be called roles
 }
+
+model PasswordResetCode {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique
+  used       Boolean  @default(false)
+  expiryDate DateTime
+  //fields: [userId] in the PasswordResetCode table is a foreign key.
+  //references: [id] It points to User.id.
+  //onDelete: Cascade If a User is deleted, their Doctor record is also deleted.
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade) //many-to-one relationship. Connects the foreign key (userId) to User.id
+  userId     Int //It stores the ID of the user this reset code belongs to.
+
+  @@map("password_reset_codes") //says the table name in the database should be called password_reset_codes
+}
