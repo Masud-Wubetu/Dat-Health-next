@@ -87,3 +87,20 @@ model PasswordResetCode {
 
   @@map("password_reset_codes") //says the table name in the database should be called password_reset_codes
 }
+
+model Doctor {
+  id             Int            @id @default(autoincrement())
+  firstName      String?
+  lastName       String?
+  specialization Specialization
+  licenseNumber  String
+
+  //fields: [userId] in the Doctor table is a foreign key.
+  //references: [id] It points to User.id.
+  //onDelete: Cascade If a User is deleted, their Doctor record is also deleted.
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int           @unique //the uniqueneess enforces that no two doctor can have same userId
+  appointments Appointment[] //one-to-many relationship.
+
+  @@map("doctors") //says the table name in the database should be called doctors
+}
