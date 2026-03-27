@@ -49,3 +49,19 @@ enum Specialization {
   OPHTHALMOLOGY
   EMERGENCY_MEDICINE
 }
+
+model User {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  email             String              @unique
+  password          String
+  profilePictureUrl String?
+  roles             Role[]              @relation("UserRoles") //many-to-many relationship
+  doctor            Doctor? //one-to-one relationship. means each user can have at most only one doctor profile
+  patient           Patient? //one-to-one relationship
+  resetCodes        PasswordResetCode[] //one-to-many relationship. a user can have multiple pasword reset codes
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@map("users") //says the table name in the database should be called users
+}
