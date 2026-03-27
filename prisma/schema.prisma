@@ -123,3 +123,20 @@ model Patient {
 
   @@map("patients")
 }
+
+model Appointment {
+  id                    Int               @id @default(autoincrement())
+  startTime             DateTime
+  endTime               DateTime?
+  meetingLink           String?
+  purposeOfConsultation String?
+  initialSymptoms       String?
+  status                AppointmentStatus @default(SCHEDULED)
+  doctor                Doctor            @relation(fields: [doctorId], references: [id])
+  doctorId              Int
+  patient               Patient           @relation(fields: [patientId], references: [id])
+  patientId             Int
+  consultation          Consultation?
+
+  @@map("appointments")
+}
