@@ -65,3 +65,11 @@ model User {
 
   @@map("users") //says the table name in the database should be called users
 }
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  users User[] @relation("UserRoles")
+
+  @@map("roles") //says the table name in the database should be called roles
+}
