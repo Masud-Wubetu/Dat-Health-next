@@ -140,3 +140,16 @@ model Appointment {
 
   @@map("appointments")
 }
+
+model Consultation {
+  id                Int         @id @default(autoincrement())
+  consultationDate  DateTime    @default(now())
+  subjectiveNotes   String?
+  objectiveFindings String?
+  assessment        String?
+  plan              String?
+  appointment       Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId     Int         @unique
+
+  @@map("consultations")
+}
