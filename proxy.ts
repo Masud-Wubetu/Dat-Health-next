@@ -165,4 +165,11 @@ export async function proxy(request: NextRequest) {
 
     const isAuthRoute = authRoutes.includes(pathname)
 
+    // Redirect to login if accessing protected web routes without session
+    if (isProtectedWebRoute && !session) {
+        const loginUrl = new URL('/auth/login', request.url)
+        loginUrl.searchParams.set('callbackUrl', pathname)
+        return NextResponse.redirect(loginUrl)
+    }
+
 }
