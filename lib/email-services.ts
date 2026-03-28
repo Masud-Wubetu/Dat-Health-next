@@ -22,3 +22,41 @@ interface EmailOptions {
   template: string
   variables: Record<string, any>
 }
+
+export async function sendEmail(options: EmailOptions) {
+  try {
+    // Read template file
+    const templatePath = path.join(TEMPLATE_DIR, `${options.template}.html`)
+
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Email template '${options.template}' not found at ${templatePath}`)
+    }
+
+    let templateContent = fs.readFileSync(templatePath, 'utf8')
+
+    // Add current year to variables
+    const allVariables = {
+      ...options.variables,
+      currentYear: new Date().getFullYear()
+    }
+
+    // Replace variables in template
+    for (const [key, value] of Object.entries(allVariables)) {
+      const placeholder = new RegExp(`{{${key}}}`, 'g')
+      templateContent = templateContent.replace(placeholder, String(value))
+    }
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: options.to,
+      subject: options.subject,
+      html: templateContent,
+    }
+
+    await transporter.sendMail(mailOptions)
+    console.log(`Email sent successfully to ${options.to}`)
+  } catch (error) {
+    console.error('Failed to send email:', error)
+    throw error
+  }
+}
