@@ -186,4 +186,43 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(redirectPath, request.url))
     }
 
+     // Role-based protection for web routes
+    if (session && isProtectedWebRoute) {
+        const userRoles = session.user?.roles || []
+
+        // Doctor-only web routes
+        const doctorWebRoutes = [
+            '/doctor',
+            '/doctor/profile',
+            '/doctor/appointments',
+            '/doctor/create-consultation',
+            '/doctor/patient-consultation-history'
+        ]
+
+        const isDoctorWebRoute = doctorWebRoutes.some(route =>
+            pathname.startsWith(route)
+        )
+
+        if (isDoctorWebRoute && !userRoles.includes('DOCTOR')) {
+            return NextResponse.redirect(new URL('/unauthorized', request.url))
+        }
+
+        // Patient-only web routes
+        const patientWebRoutes = [
+            '/book-appointment',
+            '/my-appointments',
+            '/consultation-history'
+        ]
+
+        const isPatientWebRoute = patientWebRoutes.some(route =>
+            pathname.startsWith(route)
+        )
+
+        if (isPatientWebRoute && !userRoles.includes('PATIENT')) {
+            return NextResponse.redirect(new URL('/unauthorized', request.url))
+        }
+    }
+
+    return NextResponse.next()
+
 }
