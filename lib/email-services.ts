@@ -60,3 +60,85 @@ export async function sendEmail(options: EmailOptions) {
     throw error
   }
 }
+
+// Specific email functions for common use cases
+export const emailService = {
+
+  sendWelcomeEmail: async (to: string, name: string) => {
+    const loginLink = `${process.env.APP_URL}/auth/login`
+
+    await sendEmail({
+      to,
+      subject: 'Welcome to DAT Health!',
+      template: 'welcome',
+      variables: {
+        name,
+        loginLink
+      }
+    })
+  },
+
+  sendPasswordResetEmail: async (to: string, name: string, code: string) => {
+    const resetLink = `${process.env.APP_URL}/auth/reset-password?code=${code}`
+
+    await sendEmail({
+      to,
+      subject: 'Password Reset Request',
+      template: 'password-reset',
+      variables: {
+        name,
+        resetLink
+      }
+    })
+  },
+
+  sendPasswordUpdateConfirmation: async (to: string, name: string) => {
+    await sendEmail({
+      to,
+      subject: 'Password Updated Successfully',
+      template: 'password-update-confirmation',
+      variables: {
+        name
+      }
+    })
+  },
+
+  sendPassrdChangeAlert: async (to: string, name: string) => {
+    await sendEmail({
+      to,
+      subject: 'Security Alert: Password Changed',
+      template: 'password-change',
+      variables: {
+        name,
+        changeTime: new Date().toLocaleString()
+      }
+    })
+  },
+
+  sendDoctorAppointmentNotification: async (to: string, variables: any) => {
+    await sendEmail({
+      to,
+      subject: 'New Appointment Scheduled',
+      template: 'doctor-appointment',
+      variables
+    })
+  },
+
+  sendPatientAppointmentConfirmation: async (to: string, variables: any) => {
+    await sendEmail({
+      to,
+      subject: 'Appointment Confirmed',
+      template: 'patient-appointment',
+      variables
+    })
+  },
+
+  sendAppointmentCancellation: async (to: string, variables: any) => {
+    await sendEmail({
+      to,
+      subject: 'Appointment Cancellation',
+      template: 'appointment-cancellation',
+      variables
+    })
+  }
+}
