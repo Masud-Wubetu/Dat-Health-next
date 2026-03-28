@@ -47,3 +47,21 @@ export async function createSession(user: any) {
         path: '/',
     })
 }
+
+
+//  Get session for server components or API routes
+export async function getSession() {
+    // Use Next.js headers API to access cookies
+    const { cookies } = await import('next/headers')
+    const cookieStore = cookies()
+
+    // Get the session token from cookies
+    const session = (await cookieStore).get('session')?.value
+    if (!session) return null
+
+    try {
+        return await decrypt(session)
+    } catch (error) {
+        return null
+    }
+}
