@@ -134,4 +134,24 @@ export async function proxy(request: NextRequest) {
         }
     }
 
+     // Web page Pages
+    const protectedWebRoutes = [
+        // Patient Pages
+        '/profile',
+        '/book-appointment',
+        '/my-appointments',
+        '/consultation-history',
+
+        // Doctor Pages
+        '/doctor',
+        '/doctor/profile',
+        '/doctor/appointments',
+        '/doctor/create-consultation',
+        '/doctor/patient-consultation-history'
+    ]
+
+    const isProtectedWebRoute = protectedWebRoutes.some(route =>
+        pathname.startsWith(route)
+    )
+
 }
