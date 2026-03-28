@@ -77,3 +77,39 @@ export async function deleteSession() {
     const cookieStore = cookies()
         ; (await cookieStore).delete('session')
 }
+
+// Get user session from cookies (Middleware use)
+
+export async function getSessionFromRequest(request: NextRequest) {
+    // Read cookies from the incoming request
+    const cookieHeader = request.headers.get('cookie')
+    if (!cookieHeader) return null
+
+    const cookies = parseCookies(cookieHeader)
+    const session = cookies.session // Get 'session' cookie
+    if (!session) return null
+
+    try {
+        // Try decrypting the session token
+        return await decrypt(session)
+    } catch (error) {
+        // If token is invalid or expired, return null
+        return null
+    }
+}
+
+// Helper: Parse cookie header into key-value pairs
+
+function parseCookies(cookieHeader: string): Record<string, string> {
+    const cookies: Record<string, string> = {}
+
+    // Split all cookies by ';' and then each cookie into name=value
+    cookieHeader.split(';').forEach(cookie => {
+        const [name, ...valueParts] = cookie.trim().split('=')
+        if (name) {
+            cookies[name] = valueParts.join('=') // Handles values containing '='
+        }
+    })
+
+    return cookies
+}
