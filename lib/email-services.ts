@@ -12,3 +12,13 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
 })
+
+// Template directory
+const TEMPLATE_DIR = path.join(process.cwd(), 'lib', 'email-templates')
+
+interface EmailOptions {
+  to: string
+  subject: string
+  template: string
+  variables: Record<string, any>
+}
