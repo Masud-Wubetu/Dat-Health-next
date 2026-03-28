@@ -46,4 +46,49 @@ export async function proxy(request: NextRequest) {
     }
 
     
+    // Protected API routes
+    const protectedApiRoutes = [
+        // User Management
+        '/api/users',
+        '/api/users/me',
+        '/api/users/by-id',
+        '/api/users/all',
+        '/api/users/update-password',
+        '/api/users/profile-picture',
+
+        // Patient Management
+        '/api/patients/me',
+        '/api/patients/update-profile',
+        '/api/patients/', // Individual patient details e.g get patient by id
+
+        // Doctor Management 
+        '/api/doctors/me',
+        '/api/doctors/update-profile',
+
+        // Appointment Management
+        '/api/appointments',
+        '/api/appointments/book',
+        '/api/appointments/cancel',
+        '/api/appointments/complete',
+        '/api/appointments/my-appointments',
+        '/api/appointments/', // Individual appointment details e.g appointment by id
+
+        // Consultation Management
+        '/api/consultations',
+        '/api/consultations/create',
+        '/api/consultations/history',
+        '/api/consultations/appointment'
+    ]
+
+    const isProtectedApiRoute = protectedApiRoutes.some(route =>
+        pathname.startsWith(route)
+    )
+
+    // Check if it's an API route that requires authentication
+    if (isProtectedApiRoute && !session) {
+        return NextResponse.json(
+            { error: 'Authentication required' },
+            { status: 401 }
+        )
+    }
 }
