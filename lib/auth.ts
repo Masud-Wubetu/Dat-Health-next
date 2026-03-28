@@ -15,3 +15,12 @@ export async function encrypt(payload: any) {
         .setExpirationTime('24h')             // Token expires in 24 hours
         .sign(key)                            // Sign the token with our secret key
 } 
+
+// VERIFY (Decrypt) JWT Token
+export async function decrypt(input: string): Promise<any> {
+    // Verify and decode the JWT token
+    const { payload } = await jwtVerify(input, key, {
+        algorithms: ['HS256'],
+    })
+    return payload // Return the original payload (user info, etc.)
+}
