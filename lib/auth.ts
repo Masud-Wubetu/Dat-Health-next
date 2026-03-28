@@ -24,3 +24,26 @@ export async function decrypt(input: string): Promise<any> {
     })
     return payload // Return the original payload (user info, etc.)
 }
+
+
+// Create a new session and store it in a cookie
+export async function createSession(user: any) {
+    // Set cookie expiration time (72 hours)
+    const expires = new Date(Date.now() + 72 * 60 * 60 * 1000)
+
+    // Encrypt user info into a JWT
+    const sessionToken = await encrypt({ user, expires })
+
+    // Access Next.js cookie API
+    const { cookies } = await import('next/headers')
+    const cookieStore = cookies();
+
+    // Save the token in a secure cookie
+    (await cookieStore).set('session', sessionToken, {
+        expires,
+        httpOnly: true, // Not accessible from JS (more secure)
+        secure: process.env.NODE_ENV === 'production', // Only HTTPS in prod
+        sameSite: 'lax',
+        path: '/',
+    })
+}
