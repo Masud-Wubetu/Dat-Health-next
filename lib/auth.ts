@@ -7,6 +7,7 @@ const key = new TextEncoder().encode(secretKey)
 
 
 // CREATE (Encrypt) JWT Token
+
 export async function encrypt(payload: any) {
     // Create a signed JWT with the given payload
     return await new SignJWT(payload)
@@ -17,6 +18,7 @@ export async function encrypt(payload: any) {
 } 
 
 // VERIFY (Decrypt) JWT Token
+
 export async function decrypt(input: string): Promise<any> {
     // Verify and decode the JWT token
     const { payload } = await jwtVerify(input, key, {
@@ -27,6 +29,7 @@ export async function decrypt(input: string): Promise<any> {
 
 
 // Create a new session and store it in a cookie
+
 export async function createSession(user: any) {
     // Set cookie expiration time (72 hours)
     const expires = new Date(Date.now() + 72 * 60 * 60 * 1000)
@@ -48,8 +51,8 @@ export async function createSession(user: any) {
     })
 }
 
-
 //  Get session for server components or API routes
+
 export async function getSession() {
     // Use Next.js headers API to access cookies
     const { cookies } = await import('next/headers')
@@ -64,4 +67,13 @@ export async function getSession() {
     } catch (error) {
         return null
     }
+}
+
+
+// Delete session cookie (log out user)
+
+export async function deleteSession() {
+    const { cookies } = await import('next/headers')
+    const cookieStore = cookies()
+        ; (await cookieStore).delete('session')
 }
