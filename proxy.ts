@@ -154,4 +154,15 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith(route)
     )
 
+    // Auth pages
+    const authRoutes = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/forgot-password',
+        '/auth/reset-password',
+        '/auth/register-doctor'
+    ]
+
+    const isAuthRoute = authRoutes.includes(pathname)
+
 }
