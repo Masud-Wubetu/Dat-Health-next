@@ -172,4 +172,18 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
     }
 
+     // Redirect to appropriate dashboard if accessing auth pages(login, register) with active session
+    if (isAuthRoute && session) {
+        const userRoles = session.user?.roles || []
+
+        let redirectPath = '/'
+        if (userRoles.includes('DOCTOR')) {
+            redirectPath = '/doctor/profile'
+        } else if (userRoles.includes('PATIENT')) {
+            redirectPath = '/profile'
+        }
+
+        return NextResponse.redirect(new URL(redirectPath, request.url))
+    }
+
 }
