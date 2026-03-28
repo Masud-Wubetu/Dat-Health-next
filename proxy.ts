@@ -91,4 +91,47 @@ export async function proxy(request: NextRequest) {
             { status: 401 }
         )
     }
+
+    // Role-based protection for API routes
+    if (session && isProtectedApiRoute) {
+        const userRoles = session.user?.roles || []
+
+        // Doctor-only API routes
+        const doctorOnlyRoutes = [
+            '/api/consultations/create',
+            '/api/appointments/complete',
+            '/api/doctors/me',
+            '/api/doctors/update-profile'
+        ]
+
+        const isDoctorOnlyRoute = doctorOnlyRoutes.some(route =>
+            pathname.startsWith(route)
+        )
+
+        if (isDoctorOnlyRoute && !userRoles.includes('DOCTOR')) {
+            return NextResponse.json(
+                { error: 'Doctor access required' },
+                { status: 403 }
+            )
+        }
+
+        // Patient-only API routes
+        const patientOnlyRoutes = [
+            '/api/patients/me',
+            '/api/patients/update-profile',
+            '/api/appointments/book',
+        ]
+
+        const isPatientOnlyRoute = patientOnlyRoutes.some(route =>
+            pathname.startsWith(route)
+        )
+
+        if (isPatientOnlyRoute && !userRoles.includes('PATIENT')) {
+            return NextResponse.json(
+                { error: 'Patient access required' },
+                { status: 403 }
+            )
+        }
+    }
+
 }
