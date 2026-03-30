@@ -182,15 +182,6 @@ main {
   color: #3498db;
 }
 
-
-
-
-
-
-
-
-
-
 /* Form Styles */
 .form-container {
   max-width: 500px;
@@ -297,11 +288,6 @@ main {
   border-color: #f5c6cb;
   color: #721c24;
 }
-
-
-
-
-
 
 /* Home Page Styles */
 
@@ -964,17 +950,6 @@ main {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
 /* Profile Page Styles */
 .profile-container {
   max-width: 900px;
@@ -1136,8 +1111,6 @@ textarea.form-input {
   min-height: 80px;
   font-family: inherit;
 }
-
-
 
 /* added Profile Picture Styles */
 .profile-header-main {
@@ -1321,19 +1294,6 @@ textarea.form-input {
     font-size: 1.5rem;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Page Container Styles */
 .page-container {
@@ -1623,32 +1583,6 @@ textarea.form-input {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Forgot Password Help Section */
 .forgot-password-help {
   margin-top: 2rem;
@@ -1798,20 +1732,6 @@ textarea.form-input {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Doctor Specific Styles */
 .consultation-header-info {
   background: #f8f9fa;
@@ -1895,18 +1815,6 @@ textarea.form-input {
     padding: 1rem;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Patient Consultation History Styles */
 .header-content {

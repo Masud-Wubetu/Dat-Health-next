@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/nav-footer/navbar";
+import Footer from "@/nav-footer/footer";
 
 export const metadata: Metadata = {
   title: "DAT Healthcare",
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Navbar/>
+        {children}
+        <Footer/>
+        </body>
     </html>
   );
 }
