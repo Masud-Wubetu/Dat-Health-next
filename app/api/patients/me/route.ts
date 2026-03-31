@@ -57,12 +57,6 @@ export async function GET() {
     }
 }
 
-
-
-
-
-
-
 export async function PUT(request: NextRequest) {
     try {
         const session = await getSession()
