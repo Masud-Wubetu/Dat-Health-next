@@ -44,11 +44,6 @@ const ResetPassword = () => {
         });
     };
 
-
-
-
-
-
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setError('');
