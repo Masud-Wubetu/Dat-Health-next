@@ -31,7 +31,6 @@ const UpdateProfile = () => {
     }, [])
 
 
-
     const fetchProfileData = async () => {
         try {
 
@@ -79,7 +78,6 @@ const UpdateProfile = () => {
 
         }
     }
-
 
 
     const handleChange = (e: any) => {
