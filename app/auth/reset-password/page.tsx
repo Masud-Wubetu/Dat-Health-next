@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiService } from '@/lib/api-service';
 
 
-const ResetPassword = () => {
+const ResetPasswordContent = () => {
 
     const [formData, setFormData] = useState({
         newPassword: '',
@@ -193,5 +193,12 @@ const ResetPassword = () => {
 
 }
 
-export default ResetPassword;
+export default function ResetPassword() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ResetPasswordContent />
+        </Suspense>
+    );
+}
+
 

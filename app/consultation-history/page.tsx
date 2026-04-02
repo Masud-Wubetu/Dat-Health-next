@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { apiService } from '@/lib/api-service';
 
 
 
-const ConsultationHistory = () => {
+const ConsultationHistoryContent = () => {
 
     const [consultations, setConsultations] = useState<any[]>([]);
     const [error, setError] = useState('');
@@ -156,4 +156,11 @@ const ConsultationHistory = () => {
     );
 
 }
-export default ConsultationHistory;
+
+export default function ConsultationHistory() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ConsultationHistoryContent />
+        </Suspense>
+    );
+}

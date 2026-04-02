@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiService } from '@/lib/api-service';
 
 
-const CreateConsultation = () => {
+const CreateConsultationContent = () => {
 
     const [formData, setFormData] = useState<any>({
         appointmentId: '',
@@ -234,4 +234,10 @@ const CreateConsultation = () => {
 
 }
 
-export default CreateConsultation;
+export default function CreateConsultation() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CreateConsultationContent />
+        </Suspense>
+    );
+}
