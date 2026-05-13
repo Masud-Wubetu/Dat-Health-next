@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/nav-footer/navbar";
 import Footer from "@/nav-footer/footer";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "DAT Healthcare",
@@ -15,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-full flex flex-col">
+      <body className={`${inter.className} min-h-full flex flex-col`}>
         <Navbar/>
         {children}
         <Footer/>

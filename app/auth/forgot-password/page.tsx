@@ -14,6 +14,7 @@ const ForgotPassword = () => {
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
 
     const handleChange = (e: any) => {
@@ -28,6 +29,7 @@ const ForgotPassword = () => {
         setError('');
         setSuccess('');
 
+        setIsSubmitting(true);
         try {
             const response = await apiService.forgetPassword(formData);
 
@@ -39,6 +41,8 @@ const ForgotPassword = () => {
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while processing your request');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -79,8 +83,10 @@ const ForgotPassword = () => {
                     <button
                         type="submit"
                         className="form-btn"
+                        disabled={isSubmitting}
                     >
-                        Send Reset Instructions
+                        {isSubmitting && <span className="btn-spinner" />}
+                        {isSubmitting ? 'Sending...' : 'Send Reset Instructions'}
                     </button>
                 </form>
 

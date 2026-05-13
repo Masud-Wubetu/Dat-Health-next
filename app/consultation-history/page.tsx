@@ -13,6 +13,7 @@ const ConsultationHistoryContent = () => {
 
     const [consultations, setConsultations] = useState<any[]>([]);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const searchParams = useSearchParams();
     const appointmentId = searchParams.get('appointmentId');
 
@@ -24,24 +25,23 @@ const ConsultationHistoryContent = () => {
 
     const fetchConsultationHistory = async () => {
         try {
+            setIsLoading(true);
             let response;
             if (appointmentId) {
-                // Fetch consultation for specific appointment
                 response = await apiService.getConsultationByAppointmentId(parseInt(appointmentId));
                 if (response.data.statusCode === 200) {
                     setConsultations([response.data.data]);
                 }
             } else {
-                console.log("No Appointment id passed")
-                // Fetch all consultation history
                 response = await apiService.getConsultationHistoryForMyself();
                 if (response.data.statusCode === 200) {
                     setConsultations(response.data.data);
                 }
             }
         } catch (error: any) {
-            console.log(error)
             setError('Failed to load consultation history');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -85,7 +85,19 @@ const ConsultationHistoryContent = () => {
                     </Link>
                 </div>
 
-                {consultations.length === 0 ? (
+                {isLoading ? (
+                    <div className="skeleton-appointments">
+                        {[1, 2].map(i => (
+                            <div key={i} className="consultation-card skeleton-card">
+                                <div className="skeleton skeleton-title" style={{ width: '50%' }} />
+                                <div className="skeleton skeleton-line long" />
+                                <div className="skeleton skeleton-line medium" />
+                                <div className="skeleton skeleton-line long" />
+                                <div className="skeleton skeleton-line medium" />
+                            </div>
+                        ))}
+                    </div>
+                ) : consultations.length === 0 ? (
                     <div className="empty-state">
                         <h3>No Consultation History</h3>
                         <p>You don't have any consultation records yet.</p>

@@ -28,7 +28,7 @@ const Footer = () => {
 
                         <div className="footer-section">
                             <h4>For Doctors</h4>
-                            <Link href="/auth/register" className="footer-link">Join as Doctor</Link>
+                            <Link href="/auth/doctor-register" className="footer-link">Join as Doctor</Link>
                             <Link href="/doctor-benefits" className="footer-link">Benefits</Link>
                         </div>
 

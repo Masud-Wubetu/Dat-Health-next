@@ -172,7 +172,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
     }
 
-     // Redirect to appropriate dashboard if accessing auth pages(login, register) with active session
+    // Redirect to appropriate dashboard if accessing auth pages(login, register) with active session
     if (isAuthRoute && session) {
         const userRoles = session.user?.roles || []
 
@@ -183,7 +183,9 @@ export async function proxy(request: NextRequest) {
             redirectPath = '/profile'
         }
 
-        return NextResponse.redirect(new URL(redirectPath, request.url))
+        if (redirectPath !== pathname) {
+            return NextResponse.redirect(new URL(redirectPath, request.url))
+        }
     }
 
      // Role-based protection for web routes

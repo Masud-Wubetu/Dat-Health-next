@@ -9,6 +9,8 @@ const DoctorAppointments = () => {
 
     const [appointments, setAppointments] = useState<any[]>([]);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [actionId, setActionId] = useState<number | null>(null);
 
 
     useEffect(() => {
@@ -18,6 +20,7 @@ const DoctorAppointments = () => {
 
     const fetchAppointments = async () => {
         try {
+            setIsLoading(true);
             const response = await apiService.getMyAppointments();
 
             if (response.data.statusCode === 200) {
@@ -25,6 +28,8 @@ const DoctorAppointments = () => {
             }
         } catch (error: any) {
             setError('Failed to load appointments');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -53,20 +58,20 @@ const DoctorAppointments = () => {
 
 
     const handleCompleteAppointment = async (appointmentId: number) => {
-        if (!window.confirm('Are you sure you want to mark this appointment as completed?')) {
-            return;
-        }
+        if (!window.confirm('Are you sure you want to mark this appointment as completed?')) return;
 
+        setActionId(appointmentId);
         try {
             const response = await apiService.completeAppointment(appointmentId);
             if (response.data.statusCode === 200) {
-                // Refresh appointments list
                 fetchAppointments();
             } else {
                 setError('Failed to complete appointment');
             }
         } catch (error: any) {
             setError(error + 'Error completing appointment');
+        } finally {
+            setActionId(null);
         }
     };
 
@@ -120,7 +125,25 @@ const DoctorAppointments = () => {
                     </Link>
                 </div>
 
-                {appointments.length === 0 ? (
+                {isLoading ? (
+                    <div className="skeleton-appointments">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="appointment-card skeleton-card">
+                                <div className="skeleton-card-inner">
+                                    <div className="skeleton-card-body">
+                                        <div className="skeleton skeleton-title" style={{ width: '60%' }} />
+                                        <div className="skeleton skeleton-line medium" />
+                                    </div>
+                                    <div className="skeleton-card-right">
+                                        <div className="skeleton skeleton-badge" />
+                                        <div className="skeleton skeleton-btn" />
+                                        <div className="skeleton skeleton-btn" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : appointments.length === 0 ? (
                     <div className="empty-state">
                         <h3>No Appointments Found</h3>
                         <p>You don't have any scheduled appointments yet.</p>
@@ -146,8 +169,10 @@ const DoctorAppointments = () => {
                                                     <button
                                                         onClick={() => handleCompleteAppointment(appointment.id)}
                                                         className="btn btn-success btn-sm"
+                                                        disabled={actionId === appointment.id}
                                                     >
-                                                        Complete
+                                                        {actionId === appointment.id && <span className="btn-spinner" />}
+                                                        {actionId === appointment.id ? 'Saving...' : 'Complete'}
                                                     </button>
                                                     <button
                                                         onClick={() => handleCancelAppointment(appointment.id)}

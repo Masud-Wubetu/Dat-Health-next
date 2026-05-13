@@ -15,6 +15,7 @@ const Login = () => {
     });
 
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     const handleChange = (e: any) => {
@@ -28,15 +29,25 @@ const Login = () => {
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         setError('');
+        setIsSubmitting(true);
 
         try {
             const response = await apiService.login(formData);
 
             if (response.data.statusCode === 200) {
-                router.push('/');
+                const roles = response.data.data.roles;
+                if (roles.includes('DOCTOR')) {
+                    router.push('/doctor/profile');
+                } else if (roles.includes('PATIENT')) {
+                    router.push('/profile');
+                } else {
+                    router.push('/');
+                }
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred during Login');
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -84,8 +95,10 @@ const Login = () => {
                     <button
                         type="submit"
                         className="form-btn"
+                        disabled={isSubmitting}
                     >
-                        Login
+                        {isSubmitting && <span className="btn-spinner" />}
+                        {isSubmitting ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
 

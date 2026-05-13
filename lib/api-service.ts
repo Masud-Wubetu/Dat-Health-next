@@ -11,21 +11,60 @@ const api = axios.create({
     withCredentials: true // Important for cookies
 });
 
+// Cache for user details to prevent redundant calls
+let userDetailsCache: { data: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5000; // 5 seconds
+
 export const apiService = {
-    // Check authentication by making a request to the server
+    // ... (isAuthenticated and hasRole could also benefit, but they call getMyUserDetails internally now)
+    
+    // AUTH & USERS MANAGEMENT METHODS
+    login: (body: any) => {
+        userDetailsCache = null; // Clear cache on login
+        return api.post('/auth/login', body);
+    },
+
+    register: (body: any) => {
+        userDetailsCache = null; // Clear cache on register
+        return api.post('/auth/register', body);
+    },
+
+    logout: () => {
+        userDetailsCache = null; // Clear cache on logout
+        return api.post('/auth/logout');
+    },
+
+    forgetPassword: (body: any) => {
+        return api.post('/auth/forgot-password', body);
+    },
+
+    resetPassword: (body: any) => {
+        return api.post('/auth/reset-password', body);
+    },
+
+    getMyUserDetails: async () => {
+        const now = Date.now();
+        if (userDetailsCache && (now - userDetailsCache.timestamp < CACHE_DURATION)) {
+            return userDetailsCache.data;
+        }
+
+        const response = await api.get("/users/me");
+        userDetailsCache = { data: response, timestamp: now };
+        return response;
+    },
+
     isAuthenticated: async (): Promise<boolean> => {
         try {
-            const response = await api.get("/users/me");
+            const response = await apiService.getMyUserDetails();
             return response.status === 200;
         } catch (error) {
             return false;
         }
     },
 
-    // Check roles by making a request to the server
     hasRole: async (role: string): Promise<boolean> => {
         try {
-            const response = await api.get("/users/me");
+            const response = await apiService.getMyUserDetails();
             if (response.status === 200) {
                 const userRoles = response.data.data?.roles?.map((r: any) => r.name) || [];
                 return userRoles.includes(role);
@@ -44,31 +83,6 @@ export const apiService = {
         return apiService.hasRole('PATIENT');
     },
 
-    // AUTH & USERS MANAGEMENT METHODS
-    login: (body: any) => {
-        return api.post('/auth/login', body);
-    },
-
-    register: (body: any) => {
-        return api.post('/auth/register', body);
-    },
-
-    logout: () => {
-        return api.post('/auth/logout');
-    },
-
-    forgetPassword: (body: any) => {
-        return api.post('/auth/forgot-password', body);
-    },
-
-    resetPassword: (body: any) => {
-        return api.post('/auth/reset-password', body);
-    },
-
-    getMyUserDetails: () => {
-        return api.get("/users/me");
-    },
-
     getUserById: (userId: number) => {
         return api.get(`/users/${userId}`);
     },
@@ -84,6 +98,7 @@ export const apiService = {
     uploadProfilePicture: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
+        userDetailsCache = null; // Clear cache to reflect new picture URL
 
         return api.put("/users/profile-picture", formData, {
             headers: {
@@ -92,7 +107,7 @@ export const apiService = {
         });
     },
 
-
+    // ... (rest of the service remains same)
     
     // PATIENTS ACCOUNT MANAGEMENT
     getMyPatientProfile: () => {
@@ -100,6 +115,7 @@ export const apiService = {
     },
 
     updateMyPatientProfile: (body: any) => {
+        userDetailsCache = null; // Might affect user data if roles change
         return api.put('/patients/me', body);
     },
 
@@ -121,6 +137,7 @@ export const apiService = {
     },
 
     updateMyDoctorProfile: (body: any) => {
+        userDetailsCache = null;
         return api.put("/doctors/me", body);
     },
 

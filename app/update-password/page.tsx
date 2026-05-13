@@ -16,6 +16,7 @@ const UpdatePassword = () => {
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     const handleChange = (e: any) => {
@@ -32,7 +33,6 @@ const UpdatePassword = () => {
         setError('');
         setSuccess('');
 
-        // Validation
         if (formData.newPassword !== formData.confirmPassword) {
             setError('New password and confirm password do not match');
             return;
@@ -43,6 +43,7 @@ const UpdatePassword = () => {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             const updatePasswordRequest = {
                 oldPassword: formData.oldPassword,
@@ -53,20 +54,14 @@ const UpdatePassword = () => {
 
             if (response.data.statusCode === 200) {
                 setSuccess('Password updated successfully!');
-                setFormData({
-                    oldPassword: '',
-                    newPassword: '',
-                    confirmPassword: ''
-                });
-
+                setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
                 apiService.logout();
-
-                setTimeout(() => {
-                    router.push("/auth/login")
-                }, 5000);
+                setTimeout(() => { router.push("/auth/login") }, 5000);
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while updating password');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -143,8 +138,10 @@ const UpdatePassword = () => {
                         <button
                             type="submit"
                             className="btn btn-primary"
+                            disabled={isSubmitting}
                         >
-                            Update Password
+                            {isSubmitting && <span className="btn-spinner" />}
+                            {isSubmitting ? 'Updating...' : 'Update Password'}
                         </button>
                     </div>
                 </form>

@@ -19,6 +19,7 @@ const ResetPasswordContent = () => {
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -67,6 +68,7 @@ const ResetPasswordContent = () => {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             const resetData = {
                 newPassword: formData.newPassword,
@@ -90,6 +92,8 @@ const ResetPasswordContent = () => {
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while resetting your password');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -160,8 +164,10 @@ const ResetPasswordContent = () => {
                             <button
                                 type="submit"
                                 className="form-btn"
+                                disabled={isSubmitting}
                             >
-                                Reset Password
+                                {isSubmitting && <span className="btn-spinner" />}
+                                {isSubmitting ? 'Resetting...' : 'Reset Password'}
                             </button>
                         </form>
                     </>

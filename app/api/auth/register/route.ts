@@ -96,18 +96,34 @@ export async function POST(request: NextRequest) {
             }
 
             return user
+        }, {
+            maxWait: 5000, // default is 2000
+            timeout: 15000 // default is 5000
         })
 
+
+        // Create session - THIS SETS THE COOKIE (AUTO LOGIN)
+        const { createSession } = await import('@/lib/auth')
+        await createSession({
+            id: result.id,
+            email: result.email,
+            name: result.name,
+            roles: result.roles.map((role: any) => role.name),
+            doctor: result.doctor,
+            patient: result.patient
+        })
 
         // Send welcome email
         await emailService.sendWelcomeEmail(result.email, result.name)
 
-        //200 The request succeeded and ok
-        //201 The request succeeded and a new resource was created as a result.
         return Response.json(
-            createApiResponse(200, 'Registration successful. A welcome email has been sent to you.', {
-                email: result.email,
-                name: result.name
+            createApiResponse(200, 'Registration successful. Welcome to DAT Health!', {
+                roles: result.roles.map((role: any) => role.name),
+                user: {
+                    id: result.id,
+                    name: result.name,
+                    email: result.email
+                }
             }),
             { status: 200 }
         )
@@ -120,9 +136,6 @@ export async function POST(request: NextRequest) {
         )
     }
 }
-
-
-
 
 
 

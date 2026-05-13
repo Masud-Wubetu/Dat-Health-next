@@ -10,6 +10,8 @@ const MyAppointments = () => {
 
     const [appointments, setAppointments] = useState<any[]>([]);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [cancellingId, setCancellingId] = useState<number | null>(null);
     const router = useRouter();
 
 
@@ -20,6 +22,7 @@ const MyAppointments = () => {
 
     const fetchAppointments = async () => {
         try {
+            setIsLoading(true);
             const response = await apiService.getMyAppointments();
 
             if (response.data.statusCode === 200) {
@@ -27,6 +30,8 @@ const MyAppointments = () => {
             }
         } catch (error: any) {
             setError('Failed to load appointments');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -56,20 +61,20 @@ const MyAppointments = () => {
 
 
     const handleCancelAppointment = async (appointmentId: number) => {
-        if (!window.confirm('Are you sure you want to cancel this appointment?')) {
-            return;
-        }
+        if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
 
+        setCancellingId(appointmentId);
         try {
             const response = await apiService.cancelAppointment(appointmentId);
             if (response.data.statusCode === 200) {
-                // Refresh appointments list
                 fetchAppointments();
             } else {
                 setError('Failed to cancel appointment');
             }
         } catch (error: any) {
             setError('Error cancelling appointment');
+        } finally {
+            setCancellingId(null);
         }
     };
 
@@ -97,7 +102,25 @@ const MyAppointments = () => {
                     </Link>
                 </div>
 
-                {appointments.length === 0 ? (
+                {isLoading ? (
+                    <div className="skeleton-appointments">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="appointment-card skeleton-card">
+                                <div className="skeleton-card-inner">
+                                    <div className="skeleton-card-body">
+                                        <div className="skeleton skeleton-title" style={{ width: '55%' }} />
+                                        <div className="skeleton skeleton-line medium" />
+                                        <div className="skeleton skeleton-line short" />
+                                    </div>
+                                    <div className="skeleton-card-right">
+                                        <div className="skeleton skeleton-badge" />
+                                        <div className="skeleton skeleton-btn" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : appointments.length === 0 ? (
                     <div className="empty-state">
                         <h3>No Appointments Found</h3>
                         <p>You haven't booked any appointments yet.</p>
@@ -124,8 +147,10 @@ const MyAppointments = () => {
                                             <button
                                                 onClick={() => handleCancelAppointment(appointment.id)}
                                                 className="btn btn-danger btn-sm"
+                                                disabled={cancellingId === appointment.id}
                                             >
-                                                Cancel
+                                                {cancellingId === appointment.id && <span className="btn-spinner" />}
+                                                {cancellingId === appointment.id ? 'Cancelling...' : 'Cancel'}
                                             </button>
                                         )}
                                     </div>

@@ -19,11 +19,17 @@ const UpdateDoctorProfile = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [specializations, setSpecializations] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        fetchDoctorProfile()
-        fetchSpecializations()
+        const loadInitialData = async () => {
+            setIsLoading(true);
+            await Promise.all([fetchDoctorProfile(), fetchSpecializations()]);
+            setIsLoading(false);
+        };
+        loadInitialData();
     }, [])
 
 
@@ -69,6 +75,7 @@ const UpdateDoctorProfile = () => {
         setError('');
         setSuccess('');
 
+        setIsSubmitting(true);
         try {
             const response = await apiService.updateMyDoctorProfile(formData);
             if (response.data.statusCode === 200) {
@@ -79,6 +86,8 @@ const UpdateDoctorProfile = () => {
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while updating profile');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -146,11 +155,15 @@ const UpdateDoctorProfile = () => {
                             required
                         >
                             <option value="">Select Specialization</option>
-                            {specializations.map((spec) => (
-                                <option key={spec} value={spec}>
-                                    {formatSpecialization(spec)}
-                                </option>
-                            ))}
+                            {isLoading ? (
+                                <option disabled>Loading...</option>
+                            ) : (
+                                specializations.map((spec) => (
+                                    <option key={spec} value={spec}>
+                                        {formatSpecialization(spec)}
+                                    </option>
+                                ))
+                            )}
                         </select>
                     </div>
 
@@ -165,8 +178,10 @@ const UpdateDoctorProfile = () => {
                         <button
                             type="submit"
                             className="btn btn-primary"
+                            disabled={isSubmitting || isLoading}
                         >
-                            Update Profile
+                            {isSubmitting && <span className="btn-spinner" />}
+                            {isSubmitting ? 'Updating...' : 'Update Profile'}
                         </button>
                     </div>
                 </form>

@@ -17,6 +17,8 @@ const BookAppointment = () => {
     const [doctors, setDoctors] = useState<any[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -25,17 +27,17 @@ const BookAppointment = () => {
 
     const fetchDoctors = async () => {
         try {
+            setIsLoading(true);
             const response = await apiService.getAllDoctors();
 
             if (response.data.statusCode === 200) {
-
-                console.log(response.data)
                 setDoctors(response.data.data);
             }
 
         } catch (error) {
             setError('Failed to load doctors list');
-
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -56,7 +58,6 @@ const BookAppointment = () => {
         setError('');
         setSuccess('');
 
-        // Validation
         if (!formData.doctorId) {
             setError('Please select a doctor');
             return;
@@ -67,30 +68,25 @@ const BookAppointment = () => {
             return;
         }
 
-        // Convert local datetime to ISO format
         const appointmentData = {
             ...formData,
             doctorId: parseInt(formData.doctorId),
             startTime: new Date(formData.startTime).toISOString()
         };
 
+        setIsSubmitting(true);
         try {
             const response = await apiService.bookAppointment(appointmentData);
 
             if (response.data.statusCode === 200) {
                 setSuccess('Appointment booked successfully!');
-                setFormData({
-                    doctorId: '',
-                    purposeOfConsultation: '',
-                    initialSymptoms: '',
-                    startTime: ''
-                });
-                setTimeout(() => {
-                    router.push('/my-appointments');
-                }, 5000);
+                setFormData({ doctorId: '', purposeOfConsultation: '', initialSymptoms: '', startTime: '' });
+                setTimeout(() => { router.push('/my-appointments'); }, 5000);
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while booking appointment');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -136,6 +132,9 @@ const BookAppointment = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label className="form-label">Select Doctor</label>
+                        {isLoading ? (
+                            <div className="skeleton skeleton-input" />
+                        ) : (
                         <select
                             name="doctorId"
                             className="form-select"
@@ -150,6 +149,7 @@ const BookAppointment = () => {
                                 </option>
                             ))}
                         </select>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -204,8 +204,10 @@ const BookAppointment = () => {
                         <button
                             type="submit"
                             className="btn btn-primary"
+                            disabled={isSubmitting}
                         >
-                            Book Appointment
+                            {isSubmitting && <span className="btn-spinner" />}
+                            {isSubmitting ? 'Booking...' : 'Book Appointment'}
                         </button>
                     </div>
                 </form>

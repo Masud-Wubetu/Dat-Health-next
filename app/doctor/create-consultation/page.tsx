@@ -21,6 +21,8 @@ const CreateConsultationContent = () => {
     const [appointment, setAppointment] = useState<any | null>(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -41,7 +43,7 @@ const CreateConsultationContent = () => {
 
     const fetchAppointmentDetails = async () => {
         try {
-            // Use the specific appointment API route
+            setIsLoading(true);
             const response = await apiService.getAppointmentById(parseInt(appointmentId!));
 
             if (response.data.statusCode === 200) {
@@ -55,6 +57,8 @@ const CreateConsultationContent = () => {
             }
         } catch (error: any) {
             setError('Failed to load appointment details');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -79,6 +83,7 @@ const CreateConsultationContent = () => {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             const consultationData = {
                 ...formData,
@@ -95,6 +100,8 @@ const CreateConsultationContent = () => {
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while creating consultation');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -144,7 +151,16 @@ const CreateConsultationContent = () => {
                     </div>
                 )}
 
-                {appointment && (
+                {isLoading ? (
+                    <div className="consultation-header-info">
+                        <div className="skeleton skeleton-title" style={{ width: '40%' }} />
+                        <div className="appointment-summary">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="skeleton skeleton-line medium" />
+                            ))}
+                        </div>
+                    </div>
+                ) : appointment && (
                     <div className="consultation-header-info">
                         <h3>Appointment Details</h3>
                         <div className="appointment-summary">
@@ -225,8 +241,10 @@ const CreateConsultationContent = () => {
                         <button
                             type="submit"
                             className="btn btn-primary"
+                            disabled={isSubmitting || isLoading}
                         >
-                            Create Consultation
+                            {isSubmitting && <span className="btn-spinner" />}
+                            {isSubmitting ? 'Creating...' : 'Create Consultation'}
                         </button>
                     </div>
                 </form>

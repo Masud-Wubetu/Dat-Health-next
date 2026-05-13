@@ -20,6 +20,7 @@ const DoctorRegister = () => {
     const [specializations, setSpecializations] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
 
@@ -66,11 +67,12 @@ const DoctorRegister = () => {
             return;
         }
 
+        setIsSubmitting(true);
         try {
 
             const response = await apiService.register(formData);
             if (response.data.statusCode === 200 || response.data.statusCode === 201) {
-                setSuccess('Doctor registration successful! You can now login.');
+                setSuccess('Doctor registration successful! Redirecting to your profile...');
 
                 setFormData({
                     name: '',
@@ -82,13 +84,14 @@ const DoctorRegister = () => {
                 });
 
                 setTimeout(() => {
-                    router.push('/auth/login');
-                }, 5000);
+                    router.push('/doctor/profile');
+                }, 2000);
             }
 
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred during registration');
-
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -182,8 +185,10 @@ const DoctorRegister = () => {
                     <button
                         type="submit"
                         className="form-btn"
+                        disabled={isSubmitting}
                     >
-                        Register as Doctor
+                        {isSubmitting && <span className="btn-spinner" />}
+                        {isSubmitting ? 'Registering...' : 'Register as Doctor'}
                     </button>
                 </form>
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -40,9 +41,15 @@ export default function Home() {
               </div>
             </div>
             <div className="hero-image">
-              <div className="image-placeholder">
-                <div className="medical-icon">🏥</div>
-                <p>Telemedicine Illustration</p>
+              <div className="hero-image-wrapper">
+                <Image 
+                  src="/home/masud/.gemini/antigravity/brain/ebee1704-0b87-4160-a75f-c1746ce34d07/telemedicine_hero_1778689023124.png"
+                  alt="Telemedicine Illustration"
+                  width={600}
+                  height={600}
+                  priority
+                  className="hero-img"
+                />
               </div>
             </div>
           </div>

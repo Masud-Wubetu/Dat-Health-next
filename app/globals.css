@@ -351,7 +351,7 @@ main {
 
 .stat-label {
   font-size: 0.9rem;
-  color: rgb(255, 255, 255);
+  opacity: 0.9;
 }
 
 .hero-actions {
@@ -366,13 +366,26 @@ main {
   align-items: center;
 }
 
-.image-placeholder {
-  background: rgba(255, 255, 255, 0.1);
+.hero-image-wrapper {
+  width: 100%;
+  max-width: 600px;
   border-radius: 20px;
-  padding: 3rem;
-  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);
+  transition: transform 0.5s ease;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-image-wrapper:hover {
+  transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.02);
+}
+
+.hero-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .medical-icon {
@@ -2094,4 +2107,91 @@ textarea.form-input {
   .consultation-section h4 {
     font-size: 1rem;
   }
+}
+
+/* ============================================================
+   LOADING STATES — Skeleton Shimmer + Button Spinner
+   ============================================================ */
+
+/* Shimmer keyframe */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton base */
+.skeleton {
+  background: linear-gradient(90deg, #e8ecf0 25%, #f4f6f8 50%, #e8ecf0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+
+/* Skeleton element sizes */
+.skeleton-line       { height: 14px; margin-bottom: 10px; border-radius: 4px; }
+.skeleton-line.short { width: 45%; }
+.skeleton-line.medium{ width: 70%; }
+.skeleton-line.long  { width: 95%; }
+.skeleton-title      { height: 24px; width: 55%; margin-bottom: 18px; border-radius: 6px; }
+.skeleton-avatar     { width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0; }
+.skeleton-badge      { width: 90px; height: 28px; border-radius: 20px; }
+.skeleton-btn        { height: 38px; width: 140px; border-radius: 8px; }
+.skeleton-card       { padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; min-height: 140px; }
+.skeleton-input      { height: 44px; border-radius: 8px; width: 100%; margin-bottom: 6px; }
+
+/* Profile skeleton layout */
+.skeleton-profile-header {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+.skeleton-profile-info { flex: 1; padding-top: 6px; }
+
+/* Section block skeleton */
+.skeleton-section { margin-bottom: 2rem; }
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.skeleton-field { display: flex; flex-direction: column; gap: 6px; }
+.skeleton-label { height: 11px; width: 50%; border-radius: 4px; }
+.skeleton-value { height: 18px; width: 80%; border-radius: 4px; }
+
+/* Appointments/cards skeleton */
+.skeleton-appointments { display: flex; flex-direction: column; gap: 1rem; }
+.skeleton-card-inner   { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.skeleton-card-body    { flex: 1; }
+.skeleton-card-right   { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* Button spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* Dark spinner variant (for light buttons) */
+.btn-spinner-dark {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
+}
+
+/* Disabled-state for loading buttons */
+.btn:disabled,
+.form-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

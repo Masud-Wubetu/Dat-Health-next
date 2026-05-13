@@ -21,13 +21,19 @@ const UpdateProfile = () => {
     const [genotypes, setGenotypes] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const router = useRouter();
 
 
     useEffect(() => {
-        fetchProfileData()
-        fetchEnums()
+        const loadInitialData = async () => {
+            setIsLoading(true);
+            await Promise.all([fetchProfileData(), fetchEnums()]);
+            setIsLoading(false);
+        };
+        loadInitialData();
     }, [])
 
 
@@ -92,6 +98,7 @@ const UpdateProfile = () => {
         setError('');
         setSuccess('');
 
+        setIsSubmitting(true);
         try {
             const response = await apiService.updateMyPatientProfile(formData);
 
@@ -103,6 +110,8 @@ const UpdateProfile = () => {
             }
         } catch (error: any) {
             setError(error.response?.data?.message || 'An error occurred while updating profile');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -191,11 +200,15 @@ const UpdateProfile = () => {
                                 onChange={handleChange}
                             >
                                 <option value="">Select Blood Group</option>
-                                {bloodGroups.map((group) => (
-                                    <option key={group} value={group}>
-                                        {group.replace('_', ' ')}
-                                    </option>
-                                ))}
+                                {isLoading ? (
+                                    <option disabled>Loading...</option>
+                                ) : (
+                                    bloodGroups.map((group) => (
+                                        <option key={group} value={group}>
+                                            {group.replace('_', ' ')}
+                                        </option>
+                                    ))
+                                )}
                             </select>
                         </div>
 
@@ -208,11 +221,15 @@ const UpdateProfile = () => {
                                 onChange={handleChange}
                             >
                                 <option value="">Select Genotype</option>
-                                {genotypes.map((type) => (
-                                    <option key={type} value={type}>
-                                        {type}
-                                    </option>
-                                ))}
+                                {isLoading ? (
+                                    <option disabled>Loading...</option>
+                                ) : (
+                                    genotypes.map((type) => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
+                                    ))
+                                )}
                             </select>
                         </div>
                     </div>
@@ -241,8 +258,10 @@ const UpdateProfile = () => {
                         <button
                             type="submit"
                             className="btn btn-primary"
+                            disabled={isSubmitting || isLoading}
                         >
-                            Update Profile
+                            {isSubmitting && <span className="btn-spinner" />}
+                            {isSubmitting ? 'Updating...' : 'Update Profile'}
                         </button>
                     </div>
                 </form>
