@@ -1,3 +1,5 @@
+//app/api/auth/register/route.ts
+
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db'
 import { createApiResponse } from '@/lib/res'
@@ -118,6 +120,10 @@ export async function POST(request: NextRequest) {
         )
     }
 }
+
+
+
+
 
 
 // Ensure roles exist in database. If they don’t exist yet, it creates them. If they do, it ignors them and do nothing

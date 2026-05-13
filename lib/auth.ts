@@ -1,3 +1,5 @@
+
+// Import functions for creating and verifying JWT tokens
 import { jwtVerify, SignJWT } from 'jose'
 import { NextRequest } from 'next/server'
 
@@ -6,8 +8,10 @@ const secretKey = process.env.JWT_SECRET
 const key = new TextEncoder().encode(secretKey)
 
 
-// CREATE (Encrypt) JWT Token
 
+// -----------------------------
+// 🔐 CREATE (Encrypt) JWT Token
+// -----------------------------
 export async function encrypt(payload: any) {
     // Create a signed JWT with the given payload
     return await new SignJWT(payload)
@@ -15,10 +19,12 @@ export async function encrypt(payload: any) {
         .setIssuedAt()                        // Add issued time (iat)
         .setExpirationTime('24h')             // Token expires in 24 hours
         .sign(key)                            // Sign the token with our secret key
-} 
+}
 
-// VERIFY (Decrypt) JWT Token
 
+// -----------------------------
+// 🔓 VERIFY (Decrypt) JWT Token
+// -----------------------------
 export async function decrypt(input: string): Promise<any> {
     // Verify and decode the JWT token
     const { payload } = await jwtVerify(input, key, {
@@ -28,8 +34,9 @@ export async function decrypt(input: string): Promise<any> {
 }
 
 
-// Create a new session and store it in a cookie
-
+// -------------------------------------------------
+// ✨ Create a new session and store it in a cookie
+// -------------------------------------------------
 export async function createSession(user: any) {
     // Set cookie expiration time (72 hours)
     const expires = new Date(Date.now() + 72 * 60 * 60 * 1000)
@@ -51,8 +58,11 @@ export async function createSession(user: any) {
     })
 }
 
-//  Get session for server components or API routes
 
+
+// -------------------------------------------------
+// 🧠 Get session for server components or API routes
+// -------------------------------------------------
 export async function getSession() {
     // Use Next.js headers API to access cookies
     const { cookies } = await import('next/headers')
@@ -70,16 +80,20 @@ export async function getSession() {
 }
 
 
-// Delete session cookie (log out user)
-
+// -------------------------------------------------
+// ❌ Delete session cookie (log out user)
+// -------------------------------------------------
 export async function deleteSession() {
     const { cookies } = await import('next/headers')
     const cookieStore = cookies()
         ; (await cookieStore).delete('session')
 }
 
-// Get user session from cookies (Middleware use)
 
+
+// -------------------------------------------------
+// 🍪 Get user session from cookies (Middleware use)
+// -------------------------------------------------
 export async function getSessionFromRequest(request: NextRequest) {
     // Read cookies from the incoming request
     const cookieHeader = request.headers.get('cookie')
@@ -98,8 +112,10 @@ export async function getSessionFromRequest(request: NextRequest) {
     }
 }
 
-// Helper: Parse cookie header into key-value pairs
 
+// -------------------------------------------------
+// 🍪 Helper: Parse cookie header into key-value pairs
+// -------------------------------------------------
 function parseCookies(cookieHeader: string): Record<string, string> {
     const cookies: Record<string, string> = {}
 
@@ -113,3 +129,4 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 
     return cookies
 }
+

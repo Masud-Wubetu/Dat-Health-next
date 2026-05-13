@@ -58,6 +58,8 @@ const Profile = () => {
     };
 
 
+
+
     const handleProfilePictureChange = async (event: any) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -95,6 +97,7 @@ const Profile = () => {
         }
     };
 
+
     const formatDate = (dateString: string) => {
         if (!dateString) return 'Not provided';
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -109,10 +112,12 @@ const Profile = () => {
         return bloodGroup.replace('_', ' ');
     };
 
+
     const getProfilePictureUrl = () => {
         if (!userData?.profilePictureUrl) return null;
         return userData.profilePictureUrl;
     };
+
 
     return (
 
@@ -269,6 +274,7 @@ const Profile = () => {
             </div>
         </div>
     )
+
 
 }
 

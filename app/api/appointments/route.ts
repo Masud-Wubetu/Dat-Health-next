@@ -148,7 +148,8 @@ export async function GET() {
         }
 
 
-        let appointments;
+        let appointments
+
 
         // Check if user is doctor
         const isDoctor = session.user.roles.includes('DOCTOR')
@@ -215,6 +216,8 @@ export async function GET() {
 }
 
 
+
+
 const sendAppointmentConfirmation = async (appointment: any) => {
     try {
         const patientUser = appointment.patient.user;
@@ -262,6 +265,7 @@ const sendAppointmentConfirmation = async (appointment: any) => {
 
     }
 }
+
 
 
 // Helper to format the time, e.g., "Monday, Dec 31, 2026 at 10:00 AM"

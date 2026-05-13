@@ -18,7 +18,7 @@ export default function Home() {
               </p>
               <div className="hero-stats">
                 <div className="stat">
-                  <div className="stat-number">24/7</div>
+                  <div className="stat-number ">24/7</div>
                   <div className="stat-label">Available</div>
                 </div>
                 <div className="stat">

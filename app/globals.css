@@ -106,10 +106,6 @@ main {
 }
 
 
-
-
-
-
 /* Footer Styles */
 .footer {
   background: #2c3e50;
@@ -349,12 +345,13 @@ main {
 .stat-number {
   font-size: 2rem;
   font-weight: bold;
+  color: white;
   margin-bottom: 0.5rem;
 }
 
 .stat-label {
   font-size: 0.9rem;
-  opacity: 0.8;
+  color: rgb(255, 255, 255);
 }
 
 .hero-actions {

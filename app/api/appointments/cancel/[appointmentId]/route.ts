@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest) {
         // Update appointment status
         const updatedAppointment = await prisma.appointment.update({
             where: { id: appointmentId },
-            data: { status: 'CANCELED' },
+            data: { status: 'CANCELLED' },
             include: {
                 doctor: { include: { user: true } },
                 patient: { include: { user: true } }
