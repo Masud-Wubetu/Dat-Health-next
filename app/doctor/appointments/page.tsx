@@ -47,7 +47,7 @@ const DoctorAppointments = () => {
         const statusConfig: { [key: string]: { class: string; text: string } } = {
             'SCHEDULED': { class: 'status-scheduled', text: 'Scheduled' },
             'COMPLETED': { class: 'status-completed', text: 'Completed' },
-            'CANCELLED': { class: 'status-cancelled', text: 'Cancelled' },
+            'CANCELED': { class: 'status-cancelled', text: 'Cancelled' },
             'IN_PROGRESS': { class: 'status-in-progress', text: 'In Progress' }
         };
 

@@ -38,11 +38,11 @@ const Register = () => {
             });
 
             if (response.data.statusCode === 200 || response.data.statusCode === 201) {
-                setSuccess('Registration successful! Redirecting to your profile...');
+                setSuccess('Registration successful! Redirecting to login...');
                 setFormData({ name: '', email: '', password: '' });
                 setTimeout(() => {
-                    router.push('/profile');
-                }, 2000);
+                    router.push('/auth/login');
+                }, 3000);
             }
 
         } catch (error: any) {
