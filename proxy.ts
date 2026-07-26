@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSessionFromRequest } from '@/lib/auth'
 
-// Export as named middleware function
-export async function middleware(request: NextRequest) {
+// Export as named proxy function
+export async function proxy(request: NextRequest) {
     const session = await getSessionFromRequest(request)
     const { pathname } = request.nextUrl
 

@@ -1,228 +1,76 @@
-'use client'
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { apiService } from '@/lib/api-service';
+import { prisma } from '@/lib/db';
+import { getSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import ProfilePictureUpload from '@/app/profile/profile-picture-upload';
 
+export const dynamic = 'force-dynamic';
 
-const DoctorProfile = () => {
+export default async function DoctorProfile() {
+    const session = await getSession();
+    if (!session || !session.user?.id) {
+        redirect('/auth/login?callbackUrl=/doctor/profile');
+    }
 
+    const userId = session.user.id;
 
-    const [userData, setUserData] = useState<any | null>(null);
-    const [doctorData, setDoctorData] = useState<any | null>(null);
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [uploadError, setUploadError] = useState('');
-    const [uploadSuccess, setUploadSuccess] = useState('');
-
-    const router = useRouter();
-
-
-    useEffect(() => {
-        fetchDoctorData();
-    }, []);
-
-
-    const fetchDoctorData = async () => {
-        try {
-            setIsLoading(true);
-            const userResponse = await apiService.getMyUserDetails();
-
-            if (userResponse.data.statusCode === 200) {
-                setUserData(userResponse.data.data);
-
-                const doctorResponse = await apiService.getMyDoctorProfile();
-                if (doctorResponse.data.statusCode === 200) {
-                    setDoctorData(doctorResponse.data.data);
-                }
-            }
-        } catch (error: any) {
-            setError('Failed to load profile data');
-            console.error('Error fetching doctor profile:', error);
-        } finally {
-            setIsLoading(false);
+    const userData = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            roles: true
         }
-    };
+    });
 
+    if (!userData) {
+        redirect('/auth/login');
+    }
 
+    const roles = userData.roles.map((r: any) => r.name);
+    let doctorData = null;
 
-    const handleUpdateProfile = () => {
-        router.push('/doctor/update-profile');
-    };
+    if (roles.includes('DOCTOR')) {
+        doctorData = await prisma.doctor.findUnique({
+            where: { userId: userId }
+        });
+    } else {
+        redirect('/unauthorized');
+    }
 
-    const handleUpdatePassword = () => {
-        router.push('/update-password');
-    };
-
-
-
-    const handleProfilePictureChange = async (event: any) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',];
-        if (!validTypes.includes(file.type)) {
-            setUploadError('Please select a valid image file (JPEG, PNG, GIF)');
-            return;
-        }
-
-        // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
-
-        setUploading(true);
-        setUploadError('');
-        setUploadSuccess('');
-
-        try {
-            const response = await apiService.uploadProfilePicture(file);
-            if (response.data.statusCode === 200) {
-                setUploadSuccess('Profile picture updated successfully!');
-                // Refresh user data to get the new profile picture URL
-                fetchDoctorData();
-                // Clear the file input
-                event.target.value = '';
-            } else {
-                setUploadError(response.data.message || 'Failed to upload profile picture');
-            }
-        } catch (error: any) {
-            setUploadError(error.response?.data?.message || 'An error occurred while uploading the picture');
-        } finally {
-            setUploading(false);
-        }
-    };
-
-
-    const formatSpecialization = (spec: string) => {
+    const formatSpecialization = (spec: string | null | undefined) => {
         if (!spec) return 'Not specified';
         return spec.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
     };
 
-    // Construct full URL for profile picture
-    const getProfilePictureUrl = () => {
-        console.log("Profile url is: ", userData?.profilePictureUrl);
-        if (!userData?.profilePictureUrl) return null;
-        return userData.profilePictureUrl;
-    };
-
-
-
-
-
     return (
         <div className="container">
             <div className="profile-container">
-
-                {error && (
-                    <div className="alert alert-error">
-                        {error}
+                <div className="profile-header-main">
+                    <ProfilePictureUpload 
+                        initialPictureUrl={userData.profilePictureUrl} 
+                        userName={userData.name} 
+                    />
+                    <div className="profile-title-section">
+                        <h1 className="profile-title">Doctor Profile</h1>
+                        <p className="profile-subtitle">Dr. {userData.name}</p>
+                        {doctorData && (
+                            <p className="profile-specialization">
+                                {formatSpecialization(doctorData.specialization)}
+                            </p>
+                        )}
                     </div>
-                )}
+                </div>
 
-                {isLoading ? (
-                    <>
-                        <div className="profile-header">
-                            <div className="skeleton-profile-header">
-                                <div className="skeleton skeleton-avatar" />
-                                <div className="skeleton-profile-info">
-                                    <div className="skeleton skeleton-title" />
-                                    <div className="skeleton skeleton-line medium" />
-                                    <div className="skeleton skeleton-line short" />
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-                                {[1, 2, 3].map(i => <div key={i} className="skeleton skeleton-btn" />)}
-                            </div>
-                        </div>
-                        {[1, 2].map(i => (
-                            <div key={i} className="skeleton-section">
-                                <div className="skeleton skeleton-title" style={{ width: '40%' }} />
-                                <div className="skeleton-grid">
-                                    {[1, 2, 3, 4].map(j => (
-                                        <div key={j} className="skeleton-field">
-                                            <div className="skeleton skeleton-label" />
-                                            <div className="skeleton skeleton-value" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                ) : (
-                    <>
-                        <div className="profile-header-main">
-                            <div className="profile-picture-section">
-                                <div className="profile-picture-container">
-                                    {getProfilePictureUrl() ? (
-                                        <div className="profile-picture-wrapper">
-                                            <Image
-                                                src={getProfilePictureUrl()!}
-                                                alt="Profile"
-                                                width={150}
-                                                height={150}
-                                                className="profile-picture"
-                                                priority
-                                            />
-                                        </div>
-                                    ) : null}
-                                    <div className={`profile-picture-placeholder ${getProfilePictureUrl() ? 'hidden' : ''}`}>
-                                        {userData?.name?.charAt(0)?.toUpperCase() || 'D'}
-                                    </div>
-                                    <div className="profile-picture-overlay">
-                                        <label htmlFor="doctor-profile-picture-upload" className="upload-label">
-                                            {uploading ? 'Uploading...' : 'Change Photo'}
-                                        </label>
-                                        <input
-                                            id="doctor-profile-picture-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleProfilePictureChange}
-                                            disabled={uploading}
-                                            style={{ display: 'none' }}
-                                        />
-                                    </div>
-                                </div>
-                                {uploadError && (
-                                    <div className="alert alert-error mt-1">
-                                        {uploadError}
-                                    </div>
-                                )}
-                                {uploadSuccess && (
-                                    <div className="alert alert-success mt-1">
-                                        {uploadSuccess}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="profile-title-section">
-                                <h1 className="profile-title">Doctor Profile</h1>
-                                <p className="profile-subtitle">Dr. {userData?.name}</p>
-                                {doctorData && (
-                                    <p className="profile-specialization">
-                                        {formatSpecialization(doctorData.specialization)}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="profile-actions">
-                            <button onClick={handleUpdateProfile} className="btn btn-primary">
-                                Update Profile
-                            </button>
-                            <button onClick={handleUpdatePassword} className="btn btn-secondary">
-                                Update Password
-                            </button>
-                            <Link href="/doctor/appointments" className="btn btn-primary">
-                                My Appointments
-                            </Link>
-                        </div>
-                    </>
-                )}
+                <div className="profile-actions">
+                    <Link href="/doctor/update-profile" className="btn btn-primary">
+                        Update Profile
+                    </Link>
+                    <Link href="/update-password" className="btn btn-secondary">
+                        Update Password
+                    </Link>
+                    <Link href="/doctor/appointments" className="btn btn-primary">
+                        My Appointments
+                    </Link>
+                </div>
 
                 <div className="profile-content">
                     {/* User Information Section */}
@@ -231,27 +79,27 @@ const DoctorProfile = () => {
                         <div className="info-grid">
                             <div className="info-item">
                                 <label className="info-label">Name</label>
-                                <div className="info-value">{userData?.name || 'Not provided'}</div>
+                                <div className="info-value">{userData.name || 'Not provided'}</div>
                             </div>
                             <div className="info-item">
                                 <label className="info-label">Email</label>
-                                <div className="info-value">{userData?.email || 'Not provided'}</div>
+                                <div className="info-value">{userData.email || 'Not provided'}</div>
                             </div>
                             <div className="info-item">
                                 <label className="info-label">User ID</label>
-                                <div className="info-value">{userData?.id || 'Not provided'}</div>
+                                <div className="info-value">{userData.id || 'Not provided'}</div>
                             </div>
                             <div className="info-item">
                                 <label className="info-label">Roles</label>
                                 <div className="info-value">
-                                    {userData?.roles?.map((role: any) => role.name).join(', ') || 'Not provided'}
+                                    {roles.join(', ') || 'Not provided'}
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Doctor Information Section */}
-                    {doctorData && (
+                    {doctorData ? (
                         <div className="profile-section">
                             <h2 className="section-title">Professional Information</h2>
                             <div className="info-grid">
@@ -277,9 +125,7 @@ const DoctorProfile = () => {
                                 </div>
                             </div>
                         </div>
-                    )}
-
-                    {!doctorData && (
+                    ) : (
                         <div className="profile-section">
                             <div className="alert alert-info">
                                 <p>No doctor profile found. Please update your profile to add professional information.</p>
@@ -290,7 +136,4 @@ const DoctorProfile = () => {
             </div>
         </div>
     );
-
 }
-
-export default DoctorProfile;

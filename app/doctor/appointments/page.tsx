@@ -1,123 +1,43 @@
-'use client'
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { apiService } from '@/lib/api-service';
+import { prisma } from '@/lib/db';
+import { getSession } from '@/lib/auth';
+import DoctorAppointmentsList from './doctor-appointments-list';
+import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
 
-const DoctorAppointments = () => {
+export default async function DoctorAppointments() {
+    const session = await getSession();
+    if (!session || !session.user?.doctor?.id) {
+        redirect('/auth/login?callbackUrl=/doctor/appointments');
+    }
 
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [actionId, setActionId] = useState<number | null>(null);
+    const doctorId = session.user.doctor.id;
 
-
-    useEffect(() => {
-        fetchAppointments();
-    }, []);
-
-
-    const fetchAppointments = async () => {
-        try {
-            setIsLoading(true);
-            const response = await apiService.getMyAppointments();
-
-            if (response.data.statusCode === 200) {
-                setAppointments(response.data.data);
+    const appointments = await prisma.appointment.findMany({
+        where: {
+            doctorId: doctorId
+        },
+        include: {
+            patient: {
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                            email: true
+                        }
+                    }
+                }
             }
-        } catch (error: any) {
-            setError('Failed to load appointments');
-        } finally {
-            setIsLoading(false);
+        },
+        orderBy: {
+            startTime: 'desc'
         }
-    };
-
-    const formatDateTime = (dateTimeString: string) => {
-        return new Date(dateTimeString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const getStatusBadge = (status: string) => {
-        const statusConfig: { [key: string]: { class: string; text: string } } = {
-            'SCHEDULED': { class: 'status-scheduled', text: 'Scheduled' },
-            'COMPLETED': { class: 'status-completed', text: 'Completed' },
-            'CANCELED': { class: 'status-cancelled', text: 'Cancelled' },
-            'IN_PROGRESS': { class: 'status-in-progress', text: 'In Progress' }
-        };
-
-        const config = statusConfig[status] || { class: 'status-default', text: status };
-        return <span className={`status-badge ${config.class}`}>{config.text}</span>;
-    };
-
-
-
-    const handleCompleteAppointment = async (appointmentId: number) => {
-        if (!window.confirm('Are you sure you want to mark this appointment as completed?')) return;
-
-        setActionId(appointmentId);
-        try {
-            const response = await apiService.completeAppointment(appointmentId);
-            if (response.data.statusCode === 200) {
-                fetchAppointments();
-            } else {
-                setError('Failed to complete appointment');
-            }
-        } catch (error: any) {
-            setError(error + 'Error completing appointment');
-        } finally {
-            setActionId(null);
-        }
-    };
-
-
-    const handleCancelAppointment = async (appointmentId: number) => {
-        if (!window.confirm('Are you sure you want to cancel this appointment?')) {
-            return;
-        }
-
-        try {
-            const response = await apiService.cancelAppointment(appointmentId);
-            if (response.data.statusCode === 200) {
-                // Refresh appointments list
-                fetchAppointments();
-            } else {
-                setError('Failed to cancel appointment');
-            }
-        } catch (error: any) {
-            setError(error + 'Error cancelling appointment');
-        }
-    };
-
-
-    const formatPatientInfo = (patient: any) => {
-        return `${patient.firstName} ${patient.lastName} (${patient.user?.email})`;
-    };
-
-
-    const formatBloodGroup = (bloodGroup: string) => {
-        if (!bloodGroup) return 'Not specified';
-        return bloodGroup.replace('_', ' ');
-    };
-
-
-
+    });
 
     return (
         <div className="container">
             <div className="page-container">
-
-                {error && (
-                    <div className="alert alert-error">
-                        {error}
-                    </div>
-                )}
-
                 <div className="page-header">
                     <h1 className="page-title">My Appointments</h1>
                     <Link href="/doctor/profile" className="btn btn-secondary">
@@ -125,125 +45,8 @@ const DoctorAppointments = () => {
                     </Link>
                 </div>
 
-                {isLoading ? (
-                    <div className="skeleton-appointments">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="appointment-card skeleton-card">
-                                <div className="skeleton-card-inner">
-                                    <div className="skeleton-card-body">
-                                        <div className="skeleton skeleton-title" style={{ width: '60%' }} />
-                                        <div className="skeleton skeleton-line medium" />
-                                    </div>
-                                    <div className="skeleton-card-right">
-                                        <div className="skeleton skeleton-badge" />
-                                        <div className="skeleton skeleton-btn" />
-                                        <div className="skeleton skeleton-btn" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : appointments.length === 0 ? (
-                    <div className="empty-state">
-                        <h3>No Appointments Found</h3>
-                        <p>You don't have any scheduled appointments yet.</p>
-                    </div>
-                ) : (
-                    <div className="appointments-list">
-                        {appointments.map((appointment) => (
-                            <div key={appointment.id} className="appointment-card">
-                                <div className="appointment-header">
-                                    <div className="appointment-info">
-                                        <h3 className="patient-name">
-                                            Patient: {formatPatientInfo(appointment.patient)}
-                                        </h3>
-                                        <p className="appointment-time">
-                                            {formatDateTime(appointment.startTime)}
-                                        </p>
-                                    </div>
-                                    <div className="appointment-actions">
-                                        {getStatusBadge(appointment.status)}
-                                        <div className="action-buttons">
-                                            {appointment.status === 'SCHEDULED' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleCompleteAppointment(appointment.id)}
-                                                        className="btn btn-success btn-sm"
-                                                        disabled={actionId === appointment.id}
-                                                    >
-                                                        {actionId === appointment.id && <span className="btn-spinner" />}
-                                                        {actionId === appointment.id ? 'Saving...' : 'Complete'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleCancelAppointment(appointment.id)}
-                                                        className="btn btn-danger btn-sm"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                    <Link
-                                                        href={`/doctor/patient-consultation-history?patientId=${appointment.patient.id}`}
-                                                        className="btn btn-info btn-sm"
-                                                    >
-                                                        View History
-                                                    </Link>
-                                                </>
-                                            )}
-                                            {appointment.status === 'COMPLETED' && (
-                                                <Link
-                                                    href={`/doctor/create-consultation?appointmentId=${appointment.id}`}
-                                                    className="btn btn-primary btn-sm"
-                                                >
-                                                    Create Consultation
-                                                </Link>
-                                            )}
-                                            {appointment.meetingLink && appointment.status === 'SCHEDULED' && (
-                                                <a
-                                                    href={appointment.meetingLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn btn-outline btn-sm"
-                                                >
-                                                    Join Meeting
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="appointment-details">
-                                    <div className="detail-row">
-                                        <div className="detail-item">
-                                            <label>Purpose:</label>
-                                            <span>{appointment.purposeOfConsultation}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <label>Duration:</label>
-                                            <span>1 hour</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="detail-item">
-                                        <label>Symptoms:</label>
-                                        <span>{appointment.initialSymptoms}</span>
-                                    </div>
-
-                                    <div className="detail-item">
-                                        <label>Patient Info:</label>
-                                        <div className="patient-details">
-                                            <span><strong>DOB:</strong> {appointment.patient.dateOfBirth ? new Date(appointment.patient.dateOfBirth).toLocaleDateString() : 'Not specified'}</span>
-                                            <span><strong>Blood Group:</strong> {formatBloodGroup(appointment.patient.bloodGroup)}</span>
-                                            <span><strong>Genotype:</strong> {appointment.patient.genotype || 'Not specified'}</span>
-                                            <span><strong>Allergies:</strong> {appointment.patient.knownAllergies || 'None'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <DoctorAppointmentsList initialAppointments={appointments} />
             </div>
         </div>
     );
-
 }
-export default DoctorAppointments;

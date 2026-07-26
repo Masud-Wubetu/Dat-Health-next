@@ -1,201 +1,76 @@
-'use client'
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { apiService } from '@/lib/api-service';
+import { getSession } from '@/lib/auth';
+import LogoutButton from './logout-button';
+import NavLink from './nav-link';
 
-
-const Navbar = () => {
-
-    const [authState, setAuthState] = useState({
-        isAuthenticated: false,
-        isPatient: false,
-        isDoctor: false,
-        user: null as any,
-        isLoading: true
-    })
-
-    const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-    const pathname = usePathname();
-    const router = useRouter();
-
-
-    useEffect(() => {
-        checkAuthStatus();
-    }, [pathname])
-
-
-    const checkAuthStatus = async () => {
-        try {
-            setAuthState(prev => ({ ...prev, isLoading: true }));
-
-            const response = await apiService.getMyUserDetails();
-
-            if (response.data.statusCode === 200) {
-                const userData = response.data.data;
-                const userRoles = userData.roles?.map((role: any) => role.name) || [];
-
-                setAuthState({
-                    isAuthenticated: true,
-                    isPatient: userRoles.includes('PATIENT'),
-                    isDoctor: userRoles.includes('DOCTOR'),
-                    user: userData,
-                    isLoading: false
-                });
-            } else {
-                setAuthState({
-                    isAuthenticated: false,
-                    isPatient: false,
-                    isDoctor: false,
-                    user: null,
-                    isLoading: false
-                });
-            }
-
-        } catch (error) {
-
-            console.log('Auth check failed - user not authenticated');
-            setAuthState({
-                isAuthenticated: false,
-                isPatient: false,
-                isDoctor: false,
-                user: null,
-                isLoading: false
-            });
-
-        }
-    }
-
-    const handleLogoutClick = () => {
-        setShowLogoutModal(true)
-    }
-
-
-    const handleConfirmLogout = async () => {
-        try {
-            await apiService.logout();
-            setAuthState({
-                isAuthenticated: false,
-                isPatient: false,
-                isDoctor: false,
-                user: null,
-                isLoading: false
-            });
-            setShowLogoutModal(false);
-            router.push('/');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
-    }
-
-
-    const handleCancelLogout = () => {
-        setShowLogoutModal(false)
-    }
-
-    const isActiveLink = (path: string) => {
-        return pathname === path ? 'nav-link active' : 'nav-link';
-    };
-
-
+export default async function Navbar() {
+    const session = await getSession();
+    
+    const isAuthenticated = !!session;
+    const userRoles = session?.user?.roles || [];
+    const isPatient = userRoles.includes('PATIENT');
+    const isDoctor = userRoles.includes('DOCTOR');
 
     return (
-        <>
-            <nav className="navbar">
-                <div className="container">
-                    <div className="navbar-content">
-                        <Link href="/" className="logo">
-                            DAT Health
-                        </Link>
+        <nav className="navbar">
+            <div className="container">
+                <div className="navbar-content">
+                    <Link href="/" className="logo">
+                        DAT Health
+                    </Link>
 
-                        <div className="nav-links">
-                            <Link href="/" className={isActiveLink('/')}>
-                                Home
-                            </Link>
+                    <div className="nav-links">
+                        <NavLink href="/" className="nav-link">
+                            Home
+                        </NavLink>
 
-                            {!authState.isAuthenticated ? (
-                                <>
-                                    <Link href="/auth/login" className={isActiveLink('/auth/login')}>
-                                        Login
-                                    </Link>
-                                    <Link href="/auth/register" className={isActiveLink('/auth/register')}>
-                                        Register as Patient
-                                    </Link>
-                                    <Link href="/auth/doctor-register" className={isActiveLink('/auth/doctor-register')}>
-                                        Register as Doctor
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    {/* Patient specific links */}
-                                    {authState.isPatient && (
-                                        <>
-                                            <Link href="/profile" className={isActiveLink('/profile')}>
-                                                Profile
-                                            </Link>
-                                            <Link href="/book-appointment" className={isActiveLink('/book-appointment')}>
-                                                Book Appointment
-                                            </Link>
-                                            <Link href="/my-appointments" className={isActiveLink('/my-appointments')}>
-                                                My Appointments
-                                            </Link>
-                                        </>
-                                    )}
+                        {!isAuthenticated ? (
+                            <>
+                                <NavLink href="/auth/login" className="nav-link">
+                                    Login
+                                </NavLink>
+                                <NavLink href="/auth/register" className="nav-link">
+                                    Register as Patient
+                                </NavLink>
+                                <NavLink href="/auth/doctor-register" className="nav-link">
+                                    Register as Doctor
+                                </NavLink>
+                            </>
+                        ) : (
+                            <>
+                                {/* Patient specific links */}
+                                {isPatient && (
+                                    <>
+                                        <NavLink href="/profile" className="nav-link">
+                                            Profile
+                                        </NavLink>
+                                        <NavLink href="/book-appointment" className="nav-link">
+                                            Book Appointment
+                                        </NavLink>
+                                        <NavLink href="/my-appointments" className="nav-link">
+                                            My Appointments
+                                        </NavLink>
+                                    </>
+                                )}
 
-                                    {/* Doctor specific links */}
-                                    {authState.isDoctor && (
-                                        <>
-                                            <Link href="/doctor/profile" className={isActiveLink('/doctor/profile')}>
-                                                Doctor Profile
-                                            </Link>
-                                            <Link href="/doctor/appointments" className={isActiveLink('/doctor/appointments')}>
-                                                My Appointments
-                                            </Link>
-                                        </>
-                                    )}
+                                {/* Doctor specific links */}
+                                {isDoctor && (
+                                    <>
+                                        <NavLink href="/doctor/profile" className="nav-link">
+                                            Doctor Profile
+                                        </NavLink>
+                                        <NavLink href="/doctor/appointments" className="nav-link">
+                                            My Appointments
+                                        </NavLink>
+                                    </>
+                                )}
 
-                                    <button onClick={handleLogoutClick} className="logout-btn">
-                                        Logout
-                                    </button>
-                                </>
-                            )}
-                        </div>
+                                <LogoutButton />
+                            </>
+                        )}
                     </div>
                 </div>
-            </nav>
-
-            {/* Logout Confirmation Modal */}
-            {showLogoutModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Confirm Logout</h3>
-                        </div>
-                        <div className="modal-body">
-                            <p>Are you sure you want to logout?</p>
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                onClick={handleCancelLogout}
-                                className="btn btn-secondary"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConfirmLogout}
-                                className="btn btn-primary"
-                            >
-                                Yes, Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    )
-
+            </div>
+        </nav>
+    );
 }
-
-export default Navbar;

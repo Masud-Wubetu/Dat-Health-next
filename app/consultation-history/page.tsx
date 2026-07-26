@@ -1,52 +1,80 @@
-'use client'
+import Link from 'next/link';
+import { prisma } from '@/lib/db';
+import { getSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { apiService } from '@/lib/api-service';
+export default async function ConsultationHistory({
+    searchParams
+}: {
+    searchParams: Promise<{ appointmentId?: string }>
+}) {
+    const session = await getSession();
+    if (!session || !session.user?.patient?.id) {
+        redirect('/auth/login?callbackUrl=/consultation-history');
+    }
 
+    const patientId = session.user.patient.id;
+    const { appointmentId } = await searchParams;
 
+    let consultations: any[] = [];
 
-const ConsultationHistoryContent = () => {
-
-    const [consultations, setConsultations] = useState<any[]>([]);
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const searchParams = useSearchParams();
-    const appointmentId = searchParams.get('appointmentId');
-
-    useEffect(() => {
-        fetchConsultationHistory()
-    }, [appointmentId])
-
-
-
-    const fetchConsultationHistory = async () => {
-        try {
-            setIsLoading(true);
-            let response;
-            if (appointmentId) {
-                response = await apiService.getConsultationByAppointmentId(parseInt(appointmentId));
-                if (response.data.statusCode === 200) {
-                    setConsultations([response.data.data]);
-                }
-            } else {
-                response = await apiService.getConsultationHistoryForMyself();
-                if (response.data.statusCode === 200) {
-                    setConsultations(response.data.data);
+    if (appointmentId) {
+        const appointmentIdNum = parseInt(appointmentId);
+        const consultation = await prisma.consultation.findUnique({
+            where: {
+                appointmentId: appointmentIdNum
+            },
+            include: {
+                appointment: {
+                    include: {
+                        doctor: {
+                            include: {
+                                user: {
+                                    select: {
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        } catch (error: any) {
-            setError('Failed to load consultation history');
-        } finally {
-            setIsLoading(false);
+        });
+
+        if (consultation && consultation.appointment.patientId === patientId) {
+            consultations = [consultation];
         }
-    };
+    } else {
+        consultations = await prisma.consultation.findMany({
+            where: {
+                appointment: {
+                    patientId: patientId
+                }
+            },
+            include: {
+                appointment: {
+                    include: {
+                        doctor: {
+                            include: {
+                                user: {
+                                    select: {
+                                        name: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                consultationDate: 'desc'
+            }
+        });
+    }
 
-
-    const formatDateTime = (dateTimeString: string) => {
+    const formatDateTime = (dateTimeString: Date | string) => {
         return new Date(dateTimeString).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -56,7 +84,6 @@ const ConsultationHistoryContent = () => {
         });
     };
 
-
     const formatDoctorName = (doctor: any) => {
         if (doctor.firstName && doctor.lastName) {
             return `Dr. ${doctor.firstName} ${doctor.lastName}`;
@@ -64,18 +91,9 @@ const ConsultationHistoryContent = () => {
         return `Dr. ${doctor.user?.name}`;
     };
 
-
-
-
     return (
         <div className="container">
             <div className="page-container">
-
-                {error && (
-                    <div className="alert alert-error">
-                        {error}
-                    </div>
-                )}
                 <div className="page-header">
                     <h1 className="page-title">
                         {appointmentId ? 'Consultation Notes' : 'Consultation History'}
@@ -85,19 +103,7 @@ const ConsultationHistoryContent = () => {
                     </Link>
                 </div>
 
-                {isLoading ? (
-                    <div className="skeleton-appointments">
-                        {[1, 2].map(i => (
-                            <div key={i} className="consultation-card skeleton-card">
-                                <div className="skeleton skeleton-title" style={{ width: '50%' }} />
-                                <div className="skeleton skeleton-line long" />
-                                <div className="skeleton skeleton-line medium" />
-                                <div className="skeleton skeleton-line long" />
-                                <div className="skeleton skeleton-line medium" />
-                            </div>
-                        ))}
-                    </div>
-                ) : consultations.length === 0 ? (
+                {consultations.length === 0 ? (
                     <div className="empty-state">
                         <h3>No Consultation History</h3>
                         <p>You don't have any consultation records yet.</p>
@@ -167,14 +173,5 @@ const ConsultationHistoryContent = () => {
                 )}
             </div>
         </div>
-    );
-
-}
-
-export default function ConsultationHistory() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ConsultationHistoryContent />
-        </Suspense>
     );
 }

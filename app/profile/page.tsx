@@ -1,104 +1,40 @@
-'use client'
-
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { apiService } from '@/lib/api-service';
+import { prisma } from '@/lib/db';
+import { getSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import ProfilePictureUpload from './profile-picture-upload';
 
+export const dynamic = 'force-dynamic';
 
-const Profile = () => {
-
-    const [userData, setUserData] = useState<any>(null)
-    const [patientData, setPatientData] = useState<any>(null)
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [uploadError, setUploadError] = useState('');
-    const [uploadSuccess, setUploadSuccess] = useState('');
-    const router = useRouter();
-
-    useEffect(() => {
-        fetchUserData()
-    }, [])
-
-
-    const fetchUserData = async () => {
-        try {
-            setIsLoading(true);
-            const userResponse = await apiService.getMyUserDetails();
-
-            if (userResponse.data.statusCode === 200) {
-                setUserData(userResponse.data.data);
-
-                if (userResponse.data.data.roles.some((role: any) => role.name === 'PATIENT')) {
-                    const patientResponse = await apiService.getMyPatientProfile();
-                    if (patientResponse.data.statusCode === 200) {
-                        setPatientData(patientResponse.data.data);
-                    } else {
-                        setPatientData([])
-                    }
-                }
-            }
-        } catch (error) {
-            setError('Failed to load profile data');
-            console.error('Error fetching profile:', error);
-        } finally {
-            setIsLoading(false);
-        }
+export default async function Profile() {
+    const session = await getSession();
+    if (!session || !session.user?.id) {
+        redirect('/auth/login?callbackUrl=/profile');
     }
 
-    const handleUpdateProfile = () => {
-        router.push('/update-profile');
-    };
+    const userId = session.user.id;
 
-    const handleUpdatePassword = () => {
-        router.push('/update-password');
-    };
-
-
-
-
-    const handleProfilePictureChange = async (event: any) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (!validTypes.includes(file.type)) {
-            setUploadError('Please select a valid image file (JPEG, PNG, GIF)');
-            return;
+    const userData = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            roles: true
         }
+    });
 
-        // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
+    if (!userData) {
+        redirect('/auth/login');
+    }
 
-        setUploading(true);
-        setUploadError('');
-        setUploadSuccess('');
+    const roles = userData.roles.map((r: any) => r.name);
+    let patientData = null;
 
-        try {
-            const response = await apiService.uploadProfilePicture(file);
-            if (response.data.statusCode === 200) {
-                setUploadSuccess('Profile picture updated successfully!');
-                // Refresh user data to get the new profile picture URL
-                fetchUserData();
-                // Clear the file input
-                event.target.value = '';
-            }
-        } catch (error: any) {
-            setUploadError(error.response?.data?.message || 'An error occurred while uploading the picture');
-        } finally {
-            setUploading(false);
-        }
-    };
+    if (roles.includes('PATIENT')) {
+        patientData = await prisma.patient.findUnique({
+            where: { userId: userId }
+        });
+    }
 
-
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: Date | string | null | undefined) => {
         if (!dateString) return 'Not provided';
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -107,204 +43,112 @@ const Profile = () => {
         });
     };
 
-    const formatBloodGroup = (bloodGroup: string) => {
+    const formatBloodGroup = (bloodGroup: string | null | undefined) => {
         if (!bloodGroup) return 'Not provided';
         return bloodGroup.replace('_', ' ');
     };
 
-
-    const getProfilePictureUrl = () => {
-        if (!userData?.profilePictureUrl) return null;
-        return userData.profilePictureUrl;
-    };
-
-
     return (
-
         <div className="container">
             <div className="profile-container">
-
-                {error && (
-                    <div className="alert alert-error">
-                        {error}
+                <div className="profile-header-main">
+                    <ProfilePictureUpload 
+                        initialPictureUrl={userData.profilePictureUrl} 
+                        userName={userData.name} 
+                    />
+                    <div className="profile-title-section">
+                        <h1 className="profile-title">My Profile</h1>
+                        <p className="profile-subtitle">{userData.name}</p>
                     </div>
-                )}
+                </div>
 
-                {isLoading ? (
-                    <>
-                        {/* Profile header skeleton */}
-                        <div className="profile-header">
-                            <div className="skeleton-profile-header">
-                                <div className="skeleton skeleton-avatar" />
-                                <div className="skeleton-profile-info">
-                                    <div className="skeleton skeleton-title" />
-                                    <div className="skeleton skeleton-line medium" />
+                <div className="profile-actions">
+                    <Link href="/update-profile" className="btn btn-primary">
+                        Update Profile
+                    </Link>
+                    <Link href="/update-password" className="btn btn-secondary">
+                        Update Password
+                    </Link>
+                    <Link href="/book-appointment" className="btn btn-primary">
+                        Book Appointment
+                    </Link>
+                    <Link href="/my-appointments" className="btn btn-secondary">
+                        My Appointments
+                    </Link>
+                    <Link href="/consultation-history" className="btn btn-outline">
+                        Consultation History
+                    </Link>
+                </div>
+
+                <div className="profile-content">
+                    {/* User Information Section */}
+                    <div className="profile-section">
+                        <h2 className="section-title">Account Information</h2>
+                        <div className="info-grid">
+                            <div className="info-item">
+                                <label className="info-label">Name</label>
+                                <div className="info-value">{userData.name || 'Not provided'}</div>
+                            </div>
+                            <div className="info-item">
+                                <label className="info-label">Email</label>
+                                <div className="info-value">{userData.email || 'Not provided'}</div>
+                            </div>
+
+                            <div className="info-item">
+                                <label className="info-label">Roles</label>
+                                <div className="info-value">
+                                    {roles.join(', ') || 'Not provided'}
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-                                {[1, 2, 3].map(i => <div key={i} className="skeleton skeleton-btn" />)}
-                            </div>
-                        </div>
-                        {/* Cards skeleton */}
-                        {[1, 2].map(i => (
-                            <div key={i} className="skeleton-section">
-                                <div className="skeleton skeleton-title" style={{ width: '35%' }} />
-                                <div className="skeleton-grid">
-                                    {[1, 2, 3, 4].map(j => (
-                                        <div key={j} className="skeleton-field">
-                                            <div className="skeleton skeleton-label" />
-                                            <div className="skeleton skeleton-value" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                ) : (
-                    <>
-                    <div className="profile-header-main">
-                        <div className="profile-picture-section">
-                            <div className="profile-picture-container">
-                                {getProfilePictureUrl() ? (
-                                    <div className="profile-picture-wrapper">
-                                        <Image
-                                            src={getProfilePictureUrl()!}
-                                            alt="Profile"
-                                            width={150}
-                                            height={150}
-                                            className="profile-picture"
-                                            priority
-                                        />
-                                    </div>
-                                ) : null}
-                                <div className={`profile-picture-placeholder ${getProfilePictureUrl() ? 'hidden' : ''}`}>
-                                    {userData?.name?.charAt(0)?.toUpperCase() || 'U'}
-                                </div>
-                                <div className="profile-picture-overlay">
-                                    <label htmlFor="profile-picture-upload" className="upload-label">
-                                        {uploading ? 'Uploading...' : 'Change Photo'}
-                                    </label>
-                                    <input
-                                        id="profile-picture-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleProfilePictureChange}
-                                        disabled={uploading}
-                                        style={{ display: 'none' }}
-                                    />
-                                </div>
-                            </div>
-                            {uploadError && (
-                                <div className="alert alert-error mt-1">
-                                    {uploadError}
-                                </div>
-                            )}
-                            {uploadSuccess && (
-                                <div className="alert alert-success mt-1">
-                                    {uploadSuccess}
-                                </div>
-                            )}
-                        </div>
-                        <div className="profile-title-section">
-                            <h1 className="profile-title">My Profile</h1>
-                            <p className="profile-subtitle">{userData?.name}</p>
                         </div>
                     </div>
 
-                    <div className="profile-actions">
-                        <button onClick={handleUpdateProfile} className="btn btn-primary">
-                            Update Profile
-                        </button>
-                        <button onClick={handleUpdatePassword} className="btn btn-secondary">
-                            Update Password
-                        </button>
-                        <Link href="/book-appointment" className="btn btn-primary">
-                            Book Appointment
-                        </Link>
-                        <Link href="/my-appointments" className="btn btn-secondary">
-                            My Appointments
-                        </Link>
-                        <Link href="/consultation-history" className="btn btn-outline">
-                            Consultation History
-                        </Link>
-                    </div>
-
-                    <div className="profile-content">
-                        {/* User Information Section */}
+                    {/* Patient Information Section */}
+                    {patientData ? (
                         <div className="profile-section">
-                            <h2 className="section-title">Account Information</h2>
+                            <h2 className="section-title">Medical Information</h2>
                             <div className="info-grid">
                                 <div className="info-item">
-                                    <label className="info-label">Name</label>
-                                    <div className="info-value">{userData?.name || 'Not provided'}</div>
+                                    <label className="info-label">First Name</label>
+                                    <div className="info-value">{patientData.firstName || 'Not provided'}</div>
                                 </div>
                                 <div className="info-item">
-                                    <label className="info-label">Email</label>
-                                    <div className="info-value">{userData?.email || 'Not provided'}</div>
+                                    <label className="info-label">Last Name</label>
+                                    <div className="info-value">{patientData.lastName || 'Not provided'}</div>
                                 </div>
-
                                 <div className="info-item">
-                                    <label className="info-label">Roles</label>
+                                    <label className="info-label">Phone</label>
+                                    <div className="info-value">{patientData.phone || 'Not provided'}</div>
+                                </div>
+                                <div className="info-item">
+                                    <label className="info-label">Date of Birth</label>
+                                    <div className="info-value">{formatDate(patientData.dateOfBirth)}</div>
+                                </div>
+                                <div className="info-item">
+                                    <label className="info-label">Blood Group</label>
+                                    <div className="info-value">{formatBloodGroup(patientData.bloodGroup)}</div>
+                                </div>
+                                <div className="info-item">
+                                    <label className="info-label">Genotype</label>
+                                    <div className="info-value">{patientData.genotype || 'Not provided'}</div>
+                                </div>
+                                <div className="info-item full-width">
+                                    <label className="info-label">Known Allergies</label>
                                     <div className="info-value">
-                                        {userData?.roles?.map((role: any) => role.name).join(', ') || 'Not provided'}
+                                        {patientData.knownAllergies || 'No known allergies'}
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Patient Information Section */}
-                        {patientData && (
-                            <div className="profile-section">
-                                <h2 className="section-title">Medical Information</h2>
-                                <div className="info-grid">
-                                    <div className="info-item">
-                                        <label className="info-label">First Name</label>
-                                        <div className="info-value">{patientData.firstName || 'Not provided'}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <label className="info-label">Last Name</label>
-                                        <div className="info-value">{patientData.lastName || 'Not provided'}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <label className="info-label">Phone</label>
-                                        <div className="info-value">{patientData.phone || 'Not provided'}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <label className="info-label">Date of Birth</label>
-                                        <div className="info-value">{formatDate(patientData.dateOfBirth)}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <label className="info-label">Blood Group</label>
-                                        <div className="info-value">{formatBloodGroup(patientData.bloodGroup)}</div>
-                                    </div>
-                                    <div className="info-item">
-                                        <label className="info-label">Genotype</label>
-                                        <div className="info-value">{patientData.genotype || 'Not provided'}</div>
-                                    </div>
-                                    <div className="info-item full-width">
-                                        <label className="info-label">Known Allergies</label>
-                                        <div className="info-value">
-                                            {patientData.knownAllergies || 'No known allergies'}
-                                        </div>
-                                    </div>
-                                </div>
+                    ) : (
+                        <div className="profile-section">
+                            <div className="alert alert-info">
+                                <p>No patient profile found. Please update your profile to add medical information.</p>
                             </div>
-                        )}
-
-                        {!patientData && (
-                            <div className="profile-section">
-                                <div className="alert alert-info">
-                                    <p>No patient profile found. Please update your profile to add medical information.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    </>
-                )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
-    )
-
+    );
 }
-
-export default Profile;
