@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSessionFromRequest } from '@/lib/auth'
 
-// Export as named proxy function
-export async function proxy(request: NextRequest) {
+// Export as named middleware function
+export async function middleware(request: NextRequest) {
     const session = await getSessionFromRequest(request)
     const { pathname } = request.nextUrl
 
@@ -168,7 +168,7 @@ export async function proxy(request: NextRequest) {
     // Redirect to login if accessing protected web routes without session
     if (isProtectedWebRoute && !session) {
         const loginUrl = new URL('/auth/login', request.url)
-        loginUrl.searchParams.set('callbackUrl', pathname)
+        loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname + request.nextUrl.search)
         return NextResponse.redirect(loginUrl)
     }
 

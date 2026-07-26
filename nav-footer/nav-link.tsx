@@ -1,0 +1,16 @@
+'use client'
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+export default function NavLink({ href, children, className = '' }: { href: string; children: React.ReactNode; className?: string }) {
+    const pathname = usePathname();
+    const isActive = pathname === href;
+    const activeClass = isActive ? 'active' : '';
+
+    return (
+        <Link href={href} className={`${className} ${activeClass}`.trim()}>
+            {children}
+        </Link>
+    );
+}

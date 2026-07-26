@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiService } from '@/lib/api-service';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 
-const Login = () => {
-
-
+const LoginContent = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -17,6 +16,8 @@ const Login = () => {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl');
 
     const handleChange = (e: any) => {
         setFormData({
@@ -36,7 +37,9 @@ const Login = () => {
 
             if (response.data.statusCode === 200) {
                 const roles = response.data.data.roles;
-                if (roles.includes('DOCTOR')) {
+                if (callbackUrl) {
+                    router.push(callbackUrl);
+                } else if (roles.includes('DOCTOR')) {
                     router.push('/doctor/profile');
                 } else if (roles.includes('PATIENT')) {
                     router.push('/profile');
@@ -119,5 +122,13 @@ const Login = () => {
     );
 
 }
+
+const Login = () => {
+    return (
+        <Suspense fallback={<div className="container">Loading...</div>}>
+            <LoginContent />
+        </Suspense>
+    );
+};
 
 export default Login;
